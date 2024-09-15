@@ -16,13 +16,13 @@ $(document).ready(function () {
 
 	// Set Rating and final Score
 	function setRating(moves) {
-		if (moves === 127) {
+		if (moves === minMoves) {
 			$ratingStars.eq(2).removeClass('fa-star').addClass('fa-star-o');
 			rating = 2;
-		} else if (moves >= 128 && moves <= 228) {
+		} else if (moves > minMoves && moves <= minMoves * 1.5) {
 			$ratingStars.eq(1).removeClass('fa-star').addClass('fa-star-o');
 			rating = 1;
-		} else if (moves >= 229) {
+		} else if (moves >= minMoves * 2) {
 			$ratingStars.eq(0).removeClass('fa-star').addClass('fa-star-o');
 			rating = 0;
 		}
@@ -43,6 +43,36 @@ $(document).ready(function () {
 		});
 	}
 
+	function askForNumberOfDisks() {
+		const numberOfDisks = swal({
+			allowEscapeKey: false,
+			allowOutsideClick: false,
+			title: 'Welcome to hanoi tower game',
+			text: "Please choose the number of disks you want to play with: ",
+			input: 'select',
+			inputOptions: {
+				tree: '3',
+				four: '4',
+				five: '5',
+				six: '6',
+				seven: '7'
+			},
+			confirmButtonText: 'Start the game'
+		}).then(function (result) {
+			switch (result) {
+				case 'tree': disksNum = 3; break;
+				case 'four': disksNum = 4; break;
+				case 'five': disksNum = 5; break;
+				case 'six': disksNum = 6; break;
+				case 'seven': disksNum = 7; break;
+				default: break;
+			}
+			minMoves = Math.pow(2, disksNum) - 1;
+			
+			initGame($tower.eq(0));
+		});
+	}
+
 	// Game Logic
 	function countMove() {
 		moves++;
@@ -54,13 +84,13 @@ $(document).ready(function () {
 					allowEscapeKey: false,
 					allowOutsideClick: false,
 					title: 'Congratulations! You Won!',
-					text: "Boom Shaka Lak",
+					text: 'Boom Shaka Lak',
 					type: 'success',
 					confirmButtonColor: '#8bc34a',
 					confirmButtonText: 'Play again!'
 				}).then(function (isConfirm) {
 					if (isConfirm) {
-						initGame($tower.eq(0));
+						askForNumberOfDisks();
 					}
 				})
 			}
@@ -89,7 +119,7 @@ $(document).ready(function () {
 		}
 	}
 
-	initGame($tower.eq(0));
+	askForNumberOfDisks();
 
 	// Event Handlers
 	$canves.on('click', '.tower', function () {
@@ -110,7 +140,7 @@ $(document).ready(function () {
 			confirmButtonText: 'Yes, Restart Game!'
 		}).then(function (isConfirm) {
 			if (isConfirm) {
-				initGame($tower.eq(0));
+				askForNumberOfDisks();
 			}
 		})
 	});
