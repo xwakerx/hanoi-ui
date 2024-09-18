@@ -5,6 +5,7 @@ $(document).ready(function () {
 		moves,
 		disksNum = 3,
 		minMoves = 127,
+		isResolvingAGame = false,
 		$canves = $('#canves'),
 		$restart = $canves.find('.button-restart'),
 		$solve = $canves.find('.button-solve'),
@@ -21,8 +22,8 @@ $(document).ready(function () {
 		$ratingStars = $scorePanel.find('i'),
 		rating = 3;
 
-	const solveGameURL = 'http://localhost:3000/hanoi';
-	//const solveGameURL = 'https://hanoi-api.onrender.com/hanoi';
+	//const solveGameURL = 'http://localhost:3000/hanoi';
+	const solveGameURL = 'https://hanoi-api.onrender.com/hanoi';
 
 	// Set Rating and final Score
 	function setRating(moves) {
@@ -134,11 +135,15 @@ $(document).ready(function () {
 
 	// Event Handlers
 	$canves.on('click', '.tower', function () {
+		if (isResolvingAGame == true) { return; }
+
 		var $this = $(this);
 		tower($this, true);
 	});
 
 	$restart.on('click', function () {
+		if (isResolvingAGame == true) { return; }
+
 		swal({
 			allowEscapeKey: false,
 			allowOutsideClick: false,
@@ -157,6 +162,9 @@ $(document).ready(function () {
 	});
 
 	$solve.on('click', function () {
+		if (isResolvingAGame == true) { return; }
+
+		isResolvingAGame = true;
 		initGame($tower.eq(0));
 		$solveLoader.css({ 'display': 'inline-block' });
 
@@ -172,6 +180,7 @@ $(document).ready(function () {
 				animateSolution(response.solutionSteps);
 			},
 			error: function (xhr, status, error) {
+				isResolvingAGame = false;
 				$solveLoader.css({ 'display': 'none' });
 				swal({
 					title: 'Unkown error occurred',
@@ -211,7 +220,12 @@ $(document).ready(function () {
 			let targetTower = getTowerHTMLItem(step.targetRod);
 			setTimeout(() => { tower(sourceTower, false); }, counterForDelay*pauseInMillis);
 			counterForDelay++;
-			setTimeout(() => { tower(targetTower, false); }, counterForDelay*pauseInMillis);
+			setTimeout(() => { 
+				tower(targetTower, false);
+				if (i== steps.length-1) {
+					isResolvingAGame = false;
+				}
+			}, counterForDelay*pauseInMillis);
 			counterForDelay++;
 		}
 	}
