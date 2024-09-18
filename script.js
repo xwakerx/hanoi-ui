@@ -16,7 +16,8 @@ $(document).ready(function () {
 		$towerC = $canves.find('#tower-c'),
 		$scorePanel = $canves.find('#score-panel'),
 		$movesCount = $scorePanel.find('#moves-num'),
-		$gameSolution = $canves.find('#game-solution'),
+		$gameSolutionHeader = $canves.find('#game-solution-header'),
+		$gameSolutionSummary = $canves.find('#game-solution-summary'),
 		$solutionContainer = $canves.find('#solution-container'),
 		$solutionSteps = $canves.find('#solution-steps'),
 		$ratingStars = $scorePanel.find('i'),
@@ -174,6 +175,7 @@ $(document).ready(function () {
 			data: JSON.stringify({ numberOfDisks: disksNum }),
 			contentType: "application/json",
 			success: function (response) {
+				$gameSolutionSummary.text('Solution time in milliseconds: '+response.millisecondsToSolve.toFixed(4)+', steps: '+response.numberOfSteps);
 				displaySolutionSteps(response.solutionSteps);
 				showSolution();
 				animateSolution(response.solutionSteps);
@@ -191,13 +193,15 @@ $(document).ready(function () {
 	});
 
 	function hideSolution() {
-		$gameSolution.css({ 'display': 'none' });
+		$gameSolutionHeader.css({ 'display': 'none' });
 		$solutionContainer.css({ 'display': 'none' });
+		$gameSolutionSummary.css({ 'display': 'none' });
 	}
 
 	function showSolution() {
-		$gameSolution.css({ 'display': 'inline-block' });
+		$gameSolutionHeader.css({ 'display': 'inline-block' });
 		$solutionContainer.css({ 'display': 'inline-block' });
+		$gameSolutionSummary.css({ 'display': 'inline-block' });
 	}
 
 	function displaySolutionSteps(steps) {
