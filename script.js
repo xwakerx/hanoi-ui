@@ -1,4 +1,3 @@
-// Alert box using SweetAlert2 - https://limonte.github.io/sweetalert2
 $(document).ready(function () {
 
 	// Variables
@@ -7,19 +6,30 @@ $(document).ready(function () {
 		disksNum = 3,
 		minMoves = 127,
 		$canves = $('#canves'),
-		$restart = $canves.find('.restart'),
+		$restart = $canves.find('.button-restart'),
+		$solve = $canves.find('.button-solve'),
+		$solveLoader = $solve.find('#button-solve-loader'),
 		$tower = $canves.find('.tower'),
+		$towerA = $canves.find('#tower-a'),
+		$towerB = $canves.find('#tower-b'),
+		$towerC = $canves.find('#tower-c'),
 		$scorePanel = $canves.find('#score-panel'),
 		$movesCount = $scorePanel.find('#moves-num'),
+		$gameSolution = $canves.find('#game-solution'),
+		$solutionContainer = $canves.find('#solution-container'),
+		$solutionSteps = $canves.find('#solution-steps'),
 		$ratingStars = $scorePanel.find('i'),
 		rating = 3;
 
+	const solveGameURL = 'http://localhost:3000/hanoi';
+	//const solveGameURL = 'https://hanoi-api.onrender.com/hanoi';
+
 	// Set Rating and final Score
 	function setRating(moves) {
-		if (moves === minMoves) {
+		if (moves === minMoves+1) {
 			$ratingStars.eq(2).removeClass('fa-star').addClass('fa-star-o');
 			rating = 2;
-		} else if (moves > minMoves && moves <= minMoves * 1.5) {
+		} else if (moves > minMoves+1 && moves <= minMoves * 1.5) {
 			$ratingStars.eq(1).removeClass('fa-star').addClass('fa-star-o');
 			rating = 1;
 		} else if (moves >= minMoves * 2) {
@@ -41,10 +51,11 @@ $(document).ready(function () {
 		$ratingStars.each(function () {
 			$(this).removeClass('fa-star-o').addClass('fa-star');
 		});
+		hideSolution();
 	}
 
 	function askForNumberOfDisks() {
-		const numberOfDisks = swal({
+		swal({
 			allowEscapeKey: false,
 			allowOutsideClick: false,
 			title: 'Welcome to hanoi tower game',
@@ -68,17 +79,17 @@ $(document).ready(function () {
 				default: break;
 			}
 			minMoves = Math.pow(2, disksNum) - 1;
-			
+
 			initGame($tower.eq(0));
 		});
 	}
 
 	// Game Logic
-	function countMove() {
+	function countMove(showWinnningMessage) {
 		moves++;
 		$movesCount.html(moves);
 
-		if (moves > minMoves - 1) {
+		if (moves > minMoves - 1 && showWinnningMessage) {
 			if ($tower.eq(1).children().length === disksNum || $tower.eq(2).children().length === disksNum) {
 				swal({
 					allowEscapeKey: false,
@@ -99,7 +110,7 @@ $(document).ready(function () {
 		setRating(moves);
 	}
 
-	function tower(tower) {
+	function tower(tower, showWinnningMessage) {
 		var $disks = tower.children(),
 			$topDisk = tower.find(':last-child'),
 			topDiskValue = $topDisk.data('value'),
@@ -111,7 +122,7 @@ $(document).ready(function () {
 			} else if (topDiskValue === undefined || topDiskValue > holding[0]) {
 				$holdingDisk.remove();
 				tower.append($('<li class="disk disk-' + holding[0] + '" data-value="' + holding[0] + '"></li>'));
-				countMove();
+				countMove(showWinnningMessage);
 			}
 		} else if ($topDisk.length !== 0) {
 			$topDisk.addClass('hold');
@@ -124,7 +135,7 @@ $(document).ready(function () {
 	// Event Handlers
 	$canves.on('click', '.tower', function () {
 		var $this = $(this);
-		tower($this);
+		tower($this, true);
 	});
 
 	$restart.on('click', function () {
@@ -132,7 +143,7 @@ $(document).ready(function () {
 			allowEscapeKey: false,
 			allowOutsideClick: false,
 			title: 'Are you sure?',
-			text: "Your progress will be Lost!",
+			text: 'Your progress will be Lost!',
 			type: 'warning',
 			showCancelButton: true,
 			confirmButtonColor: '#8bc34a',
@@ -144,4 +155,72 @@ $(document).ready(function () {
 			}
 		})
 	});
+
+	$solve.on('click', function () {
+		initGame($tower.eq(0));
+		$solveLoader.css({ 'display': 'inline-block' });
+
+		$.ajax({
+			url: solveGameURL,
+			method: 'POST',
+			data: JSON.stringify({ numberOfDisks: disksNum }),
+			contentType: "application/json",
+			success: function (response) {
+				$solveLoader.css({ 'display': 'none' });
+				displaySolutionSteps(response.solutionSteps);
+				showSolution();
+				animateSolution(response.solutionSteps);
+			},
+			error: function (xhr, status, error) {
+				$solveLoader.css({ 'display': 'none' });
+				swal({
+					title: 'Unkown error occurred',
+					text: 'An error accourred when fetching solution from server, please try again',
+					type: 'error',
+				});
+			}
+		});
+	});
+
+	function hideSolution() {
+		$gameSolution.css({ 'display': 'none' });
+		$solutionContainer.css({ 'display': 'none' });
+	}
+
+	function showSolution() {
+		$gameSolution.css({ 'display': 'inline-block' });
+		$solutionContainer.css({ 'display': 'inline-block' });
+	}
+
+	function displaySolutionSteps(steps) {
+		$solutionSteps.empty();
+		for (let i = 0; i < steps.length; i++) {
+			let step = steps[i];
+			$solutionSteps.append(
+				$('<li>').text('Disk ' + step.disk + ' moved from ' + step.sourceRod + ' to ' + step.targetRod)
+			);
+		}
+	}
+
+	function animateSolution(steps) {
+		const pauseInMillis = 400;
+		let counterForDelay = 0;
+		for (let i = 0; i < steps.length; i++) {
+			let step = steps[i];
+			let sourceTower = getTowerHTMLItem(step.sourceRod);
+			let targetTower = getTowerHTMLItem(step.targetRod);
+			setTimeout(() => { tower(sourceTower, false); }, counterForDelay*pauseInMillis);
+			counterForDelay++;
+			setTimeout(() => { tower(targetTower, false); }, counterForDelay*pauseInMillis);
+			counterForDelay++;
+		}
+	}
+
+	function getTowerHTMLItem(towerId) {
+		switch(towerId) {
+			case "A": return $towerA; break;
+			case "B": return $towerB; break;
+			case "C": return $towerC; break;
+		}
+	}
 });
