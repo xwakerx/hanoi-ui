@@ -215,22 +215,23 @@ $(document).ready(function () {
 	function animateSolution(steps) {
 		const pauseInMillis = 400;
 		let counterForDelay = 0;
-		let prevItem = $('#step-0');
-		let currentItem = prevItem;
+		let $prevItem = $('#step-0');
+		let $currentItem = $prevItem;
 		for (let i = 0; i < steps.length; i++) {
 			let step = steps[i];
 			let sourceTower = getTowerHTMLItem(step.sourceRod);
 			let targetTower = getTowerHTMLItem(step.targetRod);
 			setTimeout(() => {
 				tower(sourceTower, false);
-				currentItem = $('#step-' + i);
-				prevItem.removeClass('selectedStep');
-				currentItem.addClass('selectedStep');
+				$currentItem = $('#step-' + i);
+				$currentItem.get(0).scrollIntoView({behavior: 'smooth'});
+				$prevItem.removeClass('selectedStep');
+				$currentItem.addClass('selectedStep');
 			}, counterForDelay * pauseInMillis);
 			counterForDelay++;
 			setTimeout(() => {
 				tower(targetTower, false);
-				prevItem = currentItem;
+				$prevItem = $currentItem;
 				if (i == steps.length - 1) {
 					isResolvingAGame = false;
 					$solveLoader.css({ 'display': 'none' });
