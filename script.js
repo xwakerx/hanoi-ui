@@ -27,10 +27,10 @@ $(document).ready(function () {
 
 	// Set Rating and final Score
 	function setRating(moves) {
-		if (moves === minMoves+1) {
+		if (moves === minMoves + 1) {
 			$ratingStars.eq(2).removeClass('fa-star').addClass('fa-star-o');
 			rating = 2;
-		} else if (moves > minMoves+1 && moves <= minMoves * 1.5) {
+		} else if (moves > minMoves + 1 && moves <= minMoves * 1.5) {
 			$ratingStars.eq(1).removeClass('fa-star').addClass('fa-star-o');
 			rating = 1;
 		} else if (moves >= minMoves * 2) {
@@ -174,7 +174,6 @@ $(document).ready(function () {
 			data: JSON.stringify({ numberOfDisks: disksNum }),
 			contentType: "application/json",
 			success: function (response) {
-				$solveLoader.css({ 'display': 'none' });
 				displaySolutionSteps(response.solutionSteps);
 				showSolution();
 				animateSolution(response.solutionSteps);
@@ -206,7 +205,9 @@ $(document).ready(function () {
 		for (let i = 0; i < steps.length; i++) {
 			let step = steps[i];
 			$solutionSteps.append(
-				$('<li>').text('Disk ' + step.disk + ' moved from ' + step.sourceRod + ' to ' + step.targetRod)
+				$('<li>')
+					.text('Disk ' + step.disk + ' moved from ' + step.sourceRod + ' to ' + step.targetRod)
+					.attr('id', 'step-' + i)
 			);
 		}
 	}
@@ -214,24 +215,33 @@ $(document).ready(function () {
 	function animateSolution(steps) {
 		const pauseInMillis = 400;
 		let counterForDelay = 0;
+		let prevItem = $('#step-0');
+		let currentItem = prevItem;
 		for (let i = 0; i < steps.length; i++) {
 			let step = steps[i];
 			let sourceTower = getTowerHTMLItem(step.sourceRod);
 			let targetTower = getTowerHTMLItem(step.targetRod);
-			setTimeout(() => { tower(sourceTower, false); }, counterForDelay*pauseInMillis);
+			setTimeout(() => {
+				tower(sourceTower, false);
+				currentItem = $('#step-' + i);
+				prevItem.removeClass('selectedStep');
+				currentItem.addClass('selectedStep');
+			}, counterForDelay * pauseInMillis);
 			counterForDelay++;
-			setTimeout(() => { 
+			setTimeout(() => {
 				tower(targetTower, false);
-				if (i== steps.length-1) {
+				prevItem = currentItem;
+				if (i == steps.length - 1) {
 					isResolvingAGame = false;
+					$solveLoader.css({ 'display': 'none' });
 				}
-			}, counterForDelay*pauseInMillis);
+			}, counterForDelay * pauseInMillis);
 			counterForDelay++;
 		}
 	}
 
 	function getTowerHTMLItem(towerId) {
-		switch(towerId) {
+		switch (towerId) {
 			case "A": return $towerA; break;
 			case "B": return $towerB; break;
 			case "C": return $towerC; break;

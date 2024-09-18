@@ -93,7 +93,7 @@ body {
   cursor: pointer;
   position: absolute;
   bottom: -70px;
-  left: 63%;
+  left: 53%;
 }
 
 #button-solve-loader {
@@ -127,6 +127,10 @@ body {
   bottom: -400px;
   left: 50%;
   transform: translateX(-50%);
+}
+
+.selectedStep {
+  background-color: #ffbe76;
 }
 
 .tower {
